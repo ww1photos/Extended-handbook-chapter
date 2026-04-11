@@ -4,9 +4,9 @@ from scipy.stats import norm
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 import pandas as pd
-import optimagic as em
 from numba import njit
 
+import optimagic as em
 
 momentsfile = "../data/base_moments_Germany_wages.xlsx"
 
