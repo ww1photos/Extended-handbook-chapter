@@ -78,7 +78,7 @@ if __name__ == "__main__":
         kappa = 24 
         pi = 0
         k1 = 700
-        k2 = 100
+        k2 = 10
         k3 = 1
         k4 = 1
         mu2 = 4 
@@ -160,7 +160,7 @@ if __name__ == "__main__":
         algo = "nag_dfols"
         #algo = "scipy_lbfgsb"
         # algo = "pounders"
-        n_samples = 20
+        n_samples = 3
 
         print('Save Optimization Options')
         estimation_settings = {
