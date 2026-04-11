@@ -506,16 +506,16 @@ if __name__ == "__main__":
         pi = 0
         k1 = 10
         k2 = 1
-        k3 = 0
+        #k3 = 0
         q2 = .5
         q3 = 0
         mu2 = 2.5
         mu3 = 2
         params_full = pd.DataFrame(
             data={
-                "value": [delta, k1, gamma, mu1, sigma, kappa, pi,k2,k3,mu2,mu3,q2,q3]
+                "value": [delta, k1, gamma, mu1, sigma, kappa, pi,k2,mu2,mu3,q2,q3]
             },
-            index=["delta", "k1", "gamma", "mu1", "sigma", "kappa", "pi", "k2", "k3", "mu2", "mu3", "q2", "q3"]
+            index=["delta", "k1", "gamma", "mu1", "sigma", "kappa", "pi", "k2", "mu2", "mu3", "q2", "q3"]
     ,
         )
         gmm_object = gmm(params_full.copy(),target, W, inst1, inst2, disp=True)
@@ -763,12 +763,12 @@ if __name__ == "__main__":
 
         k1 = 20
         k2 = 10
-        k3 = 0
+        #k3 = 0
         mu2 = 2.5
         mu3 = 2
         q1 = 1
         q2 = 0
-        paramsMulti = np.array([delta, k1, gamma, mu1, sigma, kappa, pi,k2,k3,mu2,mu3,q1,q2])
+        paramsMulti = np.array([delta, k1, gamma, mu1, sigma, kappa, pi,k2,mu2,mu3,q1,q2])
 
         # P=12 group
         haz_agg1, w_reemp_agg1, survival1, D1  = solveMultiTypeModel(paramsMulti, inst1)

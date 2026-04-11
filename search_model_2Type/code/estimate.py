@@ -161,7 +161,7 @@ if __name__ == "__main__":
         #algo = "scipy_lbfgsb"
         # algo = "pounders"
         N_cpu = 28
-        samples_per_core = 10
+        samples_per_core = 30
         n_samples = N_cpu * samples_per_core
 
         print('Save Optimization Options')
@@ -169,7 +169,7 @@ if __name__ == "__main__":
             "spec": [estname],
             "algo": [algo],
             "multistart": [multistart],
-            "n_cores": [N_cpu],
+            #"n_cores": [N_cpu],
             "n_samples" : [n_samples],
             "Finished" : [False]
         }
