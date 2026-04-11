@@ -169,6 +169,7 @@ if __name__ == "__main__":
             "spec": [estname],
             "algo": [algo],
             "multistart": [multistart],
+            "n_cores": [N_cpu],
             "n_samples" : [n_samples],
             "Finished" : [False]
         }
