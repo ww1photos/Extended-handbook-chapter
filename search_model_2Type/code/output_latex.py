@@ -65,7 +65,8 @@ def latex_close(logdir,logfile):
             print('On my Mac')
             os.system('/Library/TeX/texbin/pdflatex -shell-escape --src -interaction=nonstopmode '+logfile)
     elif os.name=='nt' :
-        os.system('pdflatex -shell-escape --src -interaction=nonstopmode '+logfile)
+        os.system('pdflatex -interaction=nonstopmode '+logfile)
+        os.system('pdflatex -interaction=nonstopmode '+logfile)
 
     # Delete auxiliary files
     aux_files = [logfile[:-4] + ext for ext in ['.aux', '.log', '.out', '.toc', '.fdb_latexmk']]

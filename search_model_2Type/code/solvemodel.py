@@ -4,7 +4,7 @@ from scipy.stats import norm
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 import pandas as pd
-import estimagic as em
+import optimagic as em
 from numba import njit
 
 
@@ -481,7 +481,7 @@ if __name__ == "__main__":
     T = 31
     P1 = 12
     P2 = 18
-    ben1 = np.ones(T) * 800 / 30
+    ben1 = np.ones(T) * 80000000000000000000 / 30
     ben2 = np.ones(T) * 800 / 30
     ben1[:P1] = 1100 / 30
     ben2[:P2] = 1100 / 30
@@ -573,7 +573,7 @@ if __name__ == "__main__":
         plt.axvline(x=12, color="grey", linestyle="dashed")
         plt.axvline(x=18, color="grey", linestyle="dashed")
         # plt.ylim(bottom=0, top=0.15)
-        plt.savefig("./log/fig_haz.pdf", bbox_inches="tight")
+        plt.savefig("../log/fig_haz.pdf", bbox_inches="tight")
         plt.show()
         plt.clf()
 
@@ -588,7 +588,7 @@ if __name__ == "__main__":
         plt.axvline(x=12, color="grey", linestyle="dashed")
         plt.axvline(x=18, color="grey", linestyle="dashed")
         # plt.ylim(bottom=0, top=0.15)
-        plt.savefig("./log/fig_wage.pdf", bbox_inches="tight")
+        plt.savefig("../log/fig_wage.pdf", bbox_inches="tight")
         plt.show()
         plt.clf()
 
@@ -787,7 +787,7 @@ if __name__ == "__main__":
         plt.axvline(x=12, color="grey", linestyle="dashed")
         plt.axvline(x=18, color="grey", linestyle="dashed")
         # plt.ylim(bottom=0, top=0.15)
-        plt.savefig("./log/fig_35c.pdf", bbox_inches="tight")
+        plt.savefig("../log/fig_35c.pdf", bbox_inches="tight")
         plt.show()
         plt.clf()
 
@@ -800,7 +800,7 @@ if __name__ == "__main__":
         plt.axvline(x=12, color="grey", linestyle="dashed")
         plt.axvline(x=18, color="grey", linestyle="dashed")
         # plt.ylim(bottom=0, top=0.15)
-        plt.savefig("./log/fig_35c.pdf", bbox_inches="tight")
+        plt.savefig("../log/fig_35c.pdf", bbox_inches="tight")
         plt.show()
         plt.clf()
 
@@ -813,7 +813,7 @@ if __name__ == "__main__":
         plt.axvline(x=12, color="grey", linestyle="dashed")
         plt.axvline(x=18, color="grey", linestyle="dashed")
         # plt.ylim(bottom=0, top=0.15)
-        plt.savefig("./log/fig_35c.pdf", bbox_inches="tight")
+        plt.savefig("../log/fig_35c.pdf", bbox_inches="tight")
         plt.show()
         plt.clf()
 

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import time
 
-import estimagic as em
+import optimagic as em
 
 from solvemodel import solveModel ,solveMultiTypeModel, matchingMoments, gmm
 
@@ -36,7 +36,7 @@ gray    = tuple(np.array([60, 60, 60 ]) / 256)
 
 if __name__ == "__main__":
 
-    logdir = './log/'
+    logdir = '../log/'
     if not os.path.isdir(logdir): # it checks if the log directory specified before exists or not. If not, it creates it.
         os.makedirs(logdir)
 
@@ -78,7 +78,7 @@ if __name__ == "__main__":
         kappa = 24 
         pi = 0
         k1 = 700
-        k2 = 10
+        k2 = 100
         k3 = 1
         k4 = 1
         mu2 = 4 
@@ -155,21 +155,18 @@ if __name__ == "__main__":
 
         estname = 'Est1'
         multistart = True
-        # multistart = False
+        #multistart = False
         # algo = "tao_pounders"
-        # algo = "scipy_lbfgsb"
         algo = "nag_dfols"
+        #algo = "scipy_lbfgsb"
         # algo = "pounders"
-        N_cpu = 28
-        samples_per_core = 10
-        n_samples = N_cpu * samples_per_core
+        n_samples = 20
 
         print('Save Optimization Options')
         estimation_settings = {
             "spec": [estname],
             "algo": [algo],
             "multistart": [multistart],
-            "n_cores": [N_cpu],
             "n_samples" : [n_samples],
             "Finished" : [False]
         }
@@ -189,43 +186,28 @@ if __name__ == "__main__":
             print('Algorithm: ' + algo + '\n')
             print('Multistart: False \n')
             res = em.minimize(
-                criterion=gmm_object.criterion,
+                fun=gmm_object.criterion,
                 # criterion=gmm_object.sse,
                 params=params,
-                scaling=True,
-                scaling_options={"method": "bounds", "clipping_value": 0.0},
+                #scaling=False,
+                scaling={"method": "bounds"},
                 algorithm=algo,
-                logging=logdir + estname + "_log.db",
-                log_options={
-                    "fast_logging": True,
-                    "if_database_exists": "replace",  # one of "raise", "replace", "extend",
-                    "if_table_exists": "replace",  # one of "raise", "replace", "extend"
-                },
+                logging=None
+               
             )
         if multistart==True:
             print('\n === Estimation using Estimagic === \n')
             print('Algorithm: ' + algo + '\n')
             print('Multistart: True \n')
             res = em.minimize(
-                criterion=gmm_object.criterion,
+                fun=gmm_object.criterion,
                 params=params,
-                scaling=True,
-                scaling_options={"method": "bounds", "clipping_value": 0.0},
+                #scaling=False,
+                scaling={"method": "bounds"},
                 algorithm=algo,
-                multistart=True,
-                multistart_options = {
-                    "n_cores"  : N_cpu,
-                    "n_samples": n_samples,
-                    "sampling_method" : 'latin_hypercube',
-                    "convergence_max_discoveries" : 2,
-                    "share_optimizations" : .1
-                },
-                logging=logdir + estname + "_log.db",
-                log_options={
-                    "fast_logging": True,
-                    "if_database_exists": "replace",  # one of "raise", "replace", "extend",
-                    "if_table_exists": "replace",  # one of "raise", "replace", "extend"
-                },
+                multistart={"n_samples": n_samples},
+                logging=None
+        
             )
 
         toc = time.time()-tic
@@ -239,7 +221,7 @@ if __name__ == "__main__":
         em.criterion_plot(res,monotone=True)
 
         print(gmm_object.params_full)
-        gmm_object.params_full.update(res.params)
+        #gmm_object.params_full.update(res.params)
         df = gmm_object.params_full
         df.to_excel(logdir + estname +'.xlsx')
 

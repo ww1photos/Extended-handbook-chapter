@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import time
 
-import estimagic as em
+import optimagic as em
 
 from solvemodel import solveSingleTypeModel ,solveMultiTypeModel, matchingMoments, gmm
 import output_latex
