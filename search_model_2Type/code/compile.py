@@ -203,7 +203,7 @@ def compileModel(filename, estfile, estname):
         plt.legend(loc="center right")
         plt.axvline(x=12, color="grey", linestyle="dashed")
         # plt.axvline(x=18, color="grey", linestyle="dashed")
-        plt.ylim(bottom=0, top=0.45)
+        plt.ylim(bottom=0, top=1.0)
         figname = 'fig_type_agg_s.pdf'
         plt.savefig(logdir+figpath+figname, bbox_inches="tight")      
         # plt.savefig("./log/fig_wage.pdf", bbox_inches="tight")
