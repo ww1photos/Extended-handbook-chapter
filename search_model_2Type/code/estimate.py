@@ -107,7 +107,7 @@ if __name__ == "__main__":
         params = pd.DataFrame(
             data={
                 "value": [700, 100, 0.2, 0.1],
-                "lower_bound": [0.1, 0.1, 0.01, 0.01],
+                "lower_bound": [0.1, 0.1, 0.01, 0.25],
                 "upper_bound": [2000, 500,  1.0, .5],
             },
             index=["k1", "k2", "gamma", "sigma"],
