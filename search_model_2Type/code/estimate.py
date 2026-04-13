@@ -1,4 +1,4 @@
-#s -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # Author: Johannes Schmieder
 # EC 751 - Labor Economics - Problem Set 2 - Part 2
 
