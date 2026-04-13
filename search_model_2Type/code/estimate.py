@@ -160,8 +160,8 @@ if __name__ == "__main__":
         algo = "nag_dfols"
         #algo = "scipy_lbfgsb"
         # algo = "pounders"
-        N_cpu = 4
-        samples_per_core = 5
+        N_cpu = 28
+        samples_per_core = 10
         n_samples = N_cpu * samples_per_core
 
         print('Save Optimization Options')
