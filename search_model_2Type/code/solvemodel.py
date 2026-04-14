@@ -10,6 +10,9 @@ import optimagic as em
 
 momentsfile = "../data/base_moments_Germany_wages.xlsx"
 
+alpha = 0.5 #Extension - penalty for being below search effort threshold
+s_min = 0.1 #Extension - search effort threshold
+
 def mu(xi, t):
     delta, k, gamma, mu_S, sigma, kappa, pi = xi
     return mu_S + pi * np.minimum(t - kappa, np.zeros(len(t)))
@@ -60,9 +63,30 @@ def optimalPath(xi, b):
         )
         if np.isnan(integral) or integral < 0:
             integral = 0
-        s[t] = min((1 / k * delta / (1 - delta) * integral) ** (1 / gamma), 1)
+            
+        #Extension - New search effort FOC with search effort
+            
+        if s[t+1] < s_min:
+            penalty_term = alpha * b[t]
+        else:
+            penalty_term = 0.0
+            
+        rhs = (delta / (1 - delta) * integral + penalty_term) / k
+        rhs = max(rhs, 1e-8)
+        
+        s[t] = min(rhs ** (1 / gamma), 1)
+        
+        #Extension - New reservation wage equation with utility function u(b(s))
+        
+        if s[t] < s_min:
+            b_eff = b[t] * (1 - alpha * (s_min - s[t]))
+        else:
+            b_eff = b[t]
+        
+        b_eff = max(b_eff, 1e-6)
+        
         logphi[t] = (
-            (1 - delta) * (np.log(b[t]) - k * (s[t] ** (1 + gamma)) / (1 + gamma))
+            (1 - delta) * (np.log(b_eff) - k * (s[t] ** (1 + gamma)) / (1 + gamma))
             + delta * logphi[t + 1]
             + delta * s[t] * integral
         )
@@ -132,13 +156,30 @@ def steadyState(xi, b_S):
         if np.isnan(integral) or integral < 0:
             integral = 0
 
-        # FOC for search effort
-        # f1 = min(s, 1) - (1 / k * delta / (1 - delta) * integral) ** (1 / gamma)
+        #Extension - New steady-state search effort
+        
+        if s < s_min:
+            penalty_term = alpha * b_S
+        else:
+            penalty_term = 0.0
+        
+        rhs = (delta / (1 - delta) * integral + penalty_term) / k
+        rhs = max(rhs, 1e-8)
+        
         f1 = s - (1 / k * delta / (1 - delta) * integral) ** (1 / gamma)
-        # FOC for reservation wage
+        
+        #Extension - New steady-state reservation wage
+        
+        if s < s_min:
+            b_eff = b_S * (1 - alpha * (s_min - s))
+        else:
+            b_eff = b_S
+        
+        b_eff = max(b_eff, 1e-6)
+        
         f2 = (
             -q
-            + np.log(b_S)
+            + np.log(b_eff)
             - k * (min(s, 1) ** (1 + gamma)) / (1 + gamma)
             + delta / (1 - delta) * min(s, 1) * integral
         )
