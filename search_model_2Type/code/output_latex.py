@@ -8,6 +8,8 @@ Tool to create tex file with results
 
 import os
 
+from solvemodel import alpha, s_min
+
 #fid = fopen(fullfile(logdir,[outputfile '.tex']),'w');
 #
 #output_latex_header(fid,title,h_0,1,w,c_0,1,1,1,1,nu,0)
@@ -174,7 +176,7 @@ def parameter_tablePhi(logdir,logfile,param_time,param_inst,param_pref):
     # Unpack parameters
     T_0,T_last,T_ERA,T_SRA,steps,maxP_mon = param_time
     p_H_mon,w_ret_mon,rho,kink,y_O_mon,y_U_mon,reprate,p,sigma = param_inst
-    a0,a1,a2,a3,k,gamma,lam,kappa,beta_yearly,delta_yearly  = param_pref
+    a0,a1,a2,a3,k,gamma,lam,kappa,beta_yearly,delta_yearly,alpha,s_min  = param_pref
     
     with open(logdir+logfile,'a') as f:
         f.write('\\centering \n \\begin{table}[h]')
@@ -214,6 +216,8 @@ def parameter_tablePhi(logdir,logfile,param_time,param_inst,param_pref):
         f.write('kappa & ' + '{:.2f}'.format(kappa) + ' \\\\ \n')
         f.write('beta\\_yearly & ' + '{:.2f}'.format(beta_yearly) + ' \\\\ \n')
         f.write('delta\\_yearly & ' + '{:.2f}'.format(delta_yearly) + ' \\\\ \n')
+        f.write('alpha & ' + '{:.2f}'.format(alpha) + ' \\\\ \n')
+        f.write('s\\_min & ' + '{:.2f}'.format(s_min) + ' \\\\ \n')
 
         f.write('\\bottomrule \n \n')
         f.write('\\end{tabular} \n')

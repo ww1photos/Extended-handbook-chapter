@@ -32,13 +32,13 @@
  & value \\
 \midrule
 delta & 0.9950 \\
-k1 & 176.7343 \\
-gamma & 0.0221 \\
+k1 & 41.5364 \\
+gamma & 0.0236 \\
 mu1 & 4.0000 \\
 sigma & 0.2500 \\
 kappa & 24.0000 \\
 pi & 0.0000 \\
-k2 & 66.0010 \\
+k2 & 134.2271 \\
 k3 & 1.0000 \\
 k4 & 1.0000 \\
 mu2 & 4.0000 \\
@@ -47,105 +47,9 @@ mu4 & 3.0000 \\
 q2 & 0.5000 \\
 q3 & 0.0000 \\
 q4 & 0.0000 \\
+alpha & 0.1000 \\
+s\_min & 0.5000 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\begin{table}[h]
-\centering
-\caption{Estimation Options}
-\begin{tabular}{ll}
-\toprule
- & Option \\
-\midrule
-spec & Est1 \\
-algo & nag\_dfols \\
-multistart & True \\
-n\_cores & 28 \\
-n\_samples & 280 \\
-Finished & True \\
-Runtime (hours) & 0.055595 \\
-Criterion & 151.284516 \\
-Criterion Evaluations & 134 \\
-dDdP & 0.193722 \\
-dWdP & 0.000014 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{table}[h]
-\centering
-\caption{Start Parameters}
-\begin{tabular}{lrrr}
-\toprule
- & value & lower & upper \\
-\midrule
-k1 & 700.0000 & 0.1000 & 2000.0000 \\
-k2 & 100.0000 & 0.1000 & 500.0000 \\
-gamma & 0.2000 & 0.0100 & 1.0000 \\
-sigma & 0.1000 & 0.2500 & 0.5000 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{Hazard Rate} 
- 
-
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.68\textwidth]{figures_Est1_compiled/fig_haz.pdf} 
-
-\textbf{Reemployment Wage} 
- 
-
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.68\textwidth]{figures_Est1_compiled/fig_wage.pdf} 
-
-\pagebreak 
- \textbf{Show Type Aggregation} 
- 
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type_agg_s.pdf} 
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type_agg_phi.pdf} 
-
- 
-
- 
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type_agg_surv.pdf} 
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type_agg_share.pdf} 
- 
-
- 
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type_agg_hazard.pdf} 
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type_agg_w.pdf} 
-
- 
-
- 
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_haz_agg.pdf}
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_wage_agg.pdf} 
-
-\pagebreak 
- \textbf{Type 1} 
- 
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type1_s.pdf} 
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type1_phi.pdf} 
-
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type1_hazard.pdf} 
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type1_w.pdf} 
-
-\pagebreak 
- \textbf{Type 2} 
- 
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type2_s.pdf} 
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type2_phi.pdf} 
-
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type2_hazard.pdf} 
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type2_w.pdf} 
-
-\pagebreak 
- \textbf{Type 3} 
- 
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type3_s.pdf} 
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type3_phi.pdf} 
-
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type3_hazard.pdf} 
-\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\textwidth]{figures_Est1_compiled/fig_type3_w.pdf} 
-
-\end{document}

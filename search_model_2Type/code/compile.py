@@ -60,6 +60,9 @@ def compileModel(filename, estfile, estname):
     output_latex.latex_header(logdir,logfile,'Search Model Simulations ')
 
     params_df = pd.read_excel(logdir + estfile, sheet_name='Sheet1', index_col=0)
+    from solvemodel import alpha, s_min
+    params_df.loc["alpha"] = alpha
+    params_df.loc["s_min"] = s_min
 
     form =  '{:.4f}'
     output_latex.writeln(logdir,logfile,params_df.style.format_index(escape="latex").format(form).to_latex(
