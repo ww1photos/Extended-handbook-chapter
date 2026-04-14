@@ -11,7 +11,7 @@ import optimagic as em
 momentsfile = "../data/base_moments_Germany_wages.xlsx"
 
 alpha = 0.5 #Extension - penalty for being below search effort threshold
-s_min = 0.1 #Extension - search effort threshold
+s_min = 0.5 #Extension - search effort threshold
 
 def mu(xi, t):
     delta, k, gamma, mu_S, sigma, kappa, pi = xi
@@ -66,8 +66,8 @@ def optimalPath(xi, b):
             
         #Extension - New search effort FOC with search effort
             
-        if s[t+1] < s_min:
-            penalty_term = alpha * b[t]
+        if s[t] < s_min:
+            penalty_term = alpha #Penalty term = u'(b(s)) * b'(s) = alpha
         else:
             penalty_term = 0.0
             
@@ -79,7 +79,7 @@ def optimalPath(xi, b):
         #Extension - New reservation wage equation with utility function u(b(s))
         
         if s[t] < s_min:
-            b_eff = b[t] * (1 - alpha * (s_min - s[t]))
+            b_eff = b[t] * max(1 - alpha * (s_min - s[t]), 0)
         else:
             b_eff = b[t]
         
@@ -159,19 +159,19 @@ def steadyState(xi, b_S):
         #Extension - New steady-state search effort
         
         if s < s_min:
-            penalty_term = alpha * b_S
+            penalty_term = alpha #Penalty term = u'(b(s)) * b'(s) = alpha
         else:
             penalty_term = 0.0
         
         rhs = (delta / (1 - delta) * integral + penalty_term) / k
         rhs = max(rhs, 1e-8)
         
-        f1 = s - (1 / k * delta / (1 - delta) * integral) ** (1 / gamma)
+        f1 = s - rhs ** (1 / gamma)
         
         #Extension - New steady-state reservation wage
         
         if s < s_min:
-            b_eff = b_S * (1 - alpha * (s_min - s))
+            b_eff = b_S * max(1 - alpha * (s_min - s), 0)
         else:
             b_eff = b_S
         
