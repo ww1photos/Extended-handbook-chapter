@@ -10,8 +10,8 @@ import optimagic as em
 
 momentsfile = "../data/base_moments_Germany_wages.xlsx"
 
-alpha = 0.5 #Extension - penalty for being below search effort threshold
-s_min = 0.5 #Extension - search effort threshold
+alpha = 0.9 #Extension - penalty for being below search effort threshold
+s_min = 0.2 #Extension - search effort threshold
 
 def mu(xi, t):
     delta, k, gamma, mu_S, sigma, kappa, pi = xi
@@ -66,7 +66,7 @@ def optimalPath(xi, b):
             
         #Extension - New search effort FOC with search effort
             
-        if s[t] < s_min:
+        if s[t-1] < s_min:
             penalty_term = alpha #Penalty term = u'(b(s)) * b'(s) = alpha
         else:
             penalty_term = 0.0
@@ -78,8 +78,8 @@ def optimalPath(xi, b):
         
         #Extension - New reservation wage equation with utility function u(b(s))
         
-        if s[t] < s_min:
-            b_eff = b[t] * max(1 - alpha * (s_min - s[t]), 0)
+        if s[t-1] < s_min:
+            b_eff = b[t] * max(1 - alpha * (s_min - s[t-1]), 0)
         else:
             b_eff = b[t]
         
