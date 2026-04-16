@@ -261,7 +261,7 @@ def solveMultiTypeModel(params, institutions):
 import os
 from matplotlib.backends.backend_pdf import PdfPages
 
-output_dir = r"C:\Users\rohan\OneDrive\Documents\Aarhus Uni\8. semester\Micro and Macro Models of the Labour Market\PROJECT\Code\Benchmark\search_model_2Type\log\figures_Est1_compiled"
+output_dir = r"C:\Users\rohan\OneDrive\Documents\Aarhus Uni\8. semester\Micro and Macro Models of the Labour Market\PROJECT\Code\HandbookChapter\search_model_2Type\log\figures_Est1_compiled"
 pdf_path = os.path.join(output_dir, "all_figures.pdf")
 
 if not os.path.exists(output_dir):
