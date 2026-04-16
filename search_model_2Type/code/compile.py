@@ -8,7 +8,7 @@ import time
 
 import optimagic as em
 
-from solvemodel import solveSingleTypeModel ,solveMultiTypeModel, matchingMoments, gmm
+from solvemodel import solveSingleTypeModel ,solveMultiTypeModel, matchingMoments, gmm, alpha, s_min
 import output_latex
 from output_latex import writeln
 
@@ -449,6 +449,22 @@ def compileModel(filename, estfile, estname):
         # writeln(logdir,logfile,'\\textbf{'+ title + '} \n \n')
         writeln(logdir,logfile, \
                 '\\includegraphics[clip=true,trim=0cm 0cm 0cm 0cm,width = 0.45\\textwidth]{' + figpath + figname + '} \n')
+
+            # === Extension Parameters (alpha, s_min) ===
+        writeln(logdir, logfile, '\\newpage\n')
+        writeln(logdir, logfile, '\\section*{Extension Parameters}\n')
+        
+        writeln(logdir, logfile, '\\begin{tabular}{lc}\n')
+        writeln(logdir, logfile, '\\toprule\n')
+        writeln(logdir, logfile, 'Parameter & Value \\\\\n')
+        writeln(logdir, logfile, '\\midrule\n')
+        
+        writeln(logdir, logfile, f'$\\alpha$ & {alpha:.4f} \\\\\n')
+        writeln(logdir, logfile, f'$s_{{\\min}}$ & {s_min:.4f} \\\\\n')
+        
+        writeln(logdir, logfile, '\\bottomrule\n')
+        writeln(logdir, logfile, '\\end{tabular}\n')
+
 
     # Close compiler
     output_latex.latex_close(logdir,logfile)
