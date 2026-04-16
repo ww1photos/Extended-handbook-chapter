@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 momentsfile = "../data/base_moments_Germany_wages.xlsx"
 
 alpha = 0.9 #Extension - penalty for being below search effort threshold
-s_min = 0.1 #Extension - search effort threshold
+s_min = 0.5 #Extension - search effort threshold
 
 def mu(xi, t):
     delta, k, gamma, mu_S, sigma, kappa, pi = xi
