@@ -4,18 +4,21 @@ from scipy.stats import norm
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
-momentsfile = "../data/base_moments_Germany_wages.xlsx"
-
-alpha = 0.9 #Extension - penalty for being below search effort threshold
-s_min = 0.5 #Extension - search effort threshold
-
 def mu(xi, t):
-    delta, k, gamma, mu_S, sigma, kappa, pi = xi
+    #delta, k, gamma, mu_S, sigma, kappa, pi = xi
+    
+    #Extension
+    delta, k, gamma, mu_S, sigma, kappa, pi, eta, alpha, p0, a, s_bar = xi
+    
     return mu_S + pi * np.minimum(t - kappa, np.zeros(len(t)))
 
 
 def predictedMoments(xi, b, s, logphi):
-    delta, k, gamma, mu_S, sigma, kappa, pi = xi
+    #delta, k, gamma, mu_S, sigma, kappa, pi = xi
+    
+    #Extension
+    delta, k, gamma, mu_S, sigma, kappa, pi, eta, alpha, p0, a, s_bar = xi
+    
     lastperiod = len(b)
     muv = mu(xi, np.arange(1, lastperiod + 1))
     haz = np.zeros(len(b))
@@ -37,7 +40,11 @@ def predictedMoments(xi, b, s, logphi):
 
 
 def optimalPath(xi, b):
-    delta, k, gamma, mu_S, sigma, kappa, pi = xi
+    #delta, k, gamma, mu_S, sigma, kappa, pi = xi
+    
+    #Extension
+    delta, k, gamma, mu_S, sigma, kappa, pi, eta, alpha, p0, a, s_bar = xi
+    
     lastperiod = len(b)
     muv = mu(xi, np.arange(1, lastperiod + 1))
     s = np.zeros(lastperiod)
@@ -60,34 +67,53 @@ def optimalPath(xi, b):
         if np.isnan(integral) or integral < 0:
             integral = 0
             
-        rhs = (delta / (1 - delta) * integral) / k
-        rhs = max(rhs, 1e-8)
+            
+        #s[t] = min((1 / k * delta / (1 - delta) * integral) ** (1 / gamma), 1)
         
-        s[t] = min(rhs ** (1 / gamma), 1)
+        #Extension: new search effort FOC
         
-     # --- Lagged benefit ---
-        if t == 0:
-            s_lag = s_min  
-        else:
-            s_lag = s[t-1]
+        #Linear penalty
+        penalty = eta * (np.log(b[t]) - np.log(alpha * b[t]))
+        
+        #Non-linear penalty
+        #p = 1 / (1 + np.exp(a * (s[t] - s_bar)))
+        
+        #p_prime = -a * p * (1 - p)
+        
+        #delta_u = np.log(b[t]) - np.log(alpha * b[t])  # > 0
+        
+        #penalty = -p_prime * delta_u
+
+        s[t] = min(
+            (1 / k * (delta / (1 - delta) * integral + penalty)) ** (1 / gamma),
+            1
+        )
+        
+        #Extension: new utility function
+        
+        #Linear
+        p = p0 - eta * s[t]
+        p = np.clip(p, 0.0, 1.0)
      
-        if s_lag < s_min:
-            b_eff = b[t] * max(1 - alpha * (s_min - s_lag), 0)
-        else:
-            b_eff = b[t]
+        #Non-linear
+        #p = 1 / (1 + np.exp(a * (s[t] - s_bar)))
      
-        b_eff = max(b_eff, 1e-6)
-     
+        u_new = (1 - p) * np.log(b[t]) + p * np.log(alpha * b[t])
+        
+        
         logphi[t] = (
-         (1 - delta) * (np.log(b_eff) - k * (s[t] ** (1 + gamma)) / (1 + gamma))
-         + delta * logphi[t + 1]
-         + delta * s[t] * integral
-     )
+            (1 - delta) * (u_new - k * (s[t] ** (1 + gamma)) / (1 + gamma))
+            + delta * logphi[t + 1]
+            + delta * s[t] * integral
+        )
 
     return s, logphi
 
 def steadyState(xi, b_S):
-    delta, k, gamma, mu_S, sigma, kappa, pi = xi
+    #delta, k, gamma, mu_S, sigma, kappa, pi = xi
+    
+    #Extension
+    delta, k, gamma, mu_S, sigma, kappa, pi, eta, alpha, p0, a, s_bar = xi
 
     # @njit(cache=True)
     def steadyStateSystem(x):
@@ -104,23 +130,44 @@ def steadyState(xi, b_S):
             integral = 0
 
         
-        rhs = (delta / (1 - delta) * integral) / k
-        rhs = max(rhs, 1e-8)
+
+        #f1 = s - (1 / k * delta / (1 - delta) * integral) ** (1 / gamma)
         
-        f1 = s - rhs ** (1 / gamma)
-      
-        #Extension - New steady-state reservation wage
+        #Extension: new steady state search effort and reservation wages
         
-        if s < s_min:
-            b_eff = b_S * max(1 - alpha * (s_min - s), 0)
-        else:
-            b_eff = b_S
+        #Linear
+        penalty = eta * (np.log(b_S) - np.log(alpha * b_S))
         
-        b_eff = max(b_eff, 1e-6)
+        #Non-linear
+        #p = 1 / (1 + np.exp(a * (s - s_bar)))
+        #p_prime = -a * p * (1 - p)
+        
+        #delta_u = np.log(b_S) - np.log(alpha * b_S)
+        
+        #penalty = -p_prime * delta_u
+        
+        f1 = s - (1 / k * (delta / (1 - delta) * integral + penalty)) ** (1 / gamma)
+
+
+        #f2 = (
+            #-q
+            #+ np.log(b_S)
+            #- k * (min(s, 1) ** (1 + gamma)) / (1 + gamma)
+            #+ delta / (1 - delta) * min(s, 1) * integral
+        #)
+
+        #Linear
+        p = p0 - eta * s
+        p = np.clip(p, 0.0, 1.0)
+        
+        #Non-linear
+        #p = 1 / (1 + np.exp(a * (s - s_bar)))
+
+        u_new = (1 - p) * np.log(b_S) + p * np.log(alpha * b_S)
         
         f2 = (
             -q
-            + np.log(b_eff)
+            + u_new
             - k * (min(s, 1) ** (1 + gamma)) / (1 + gamma)
             + delta / (1 - delta) * min(s, 1) * integral
         )
@@ -190,7 +237,11 @@ def solveMultiTypeModel(params, institutions):
     delta, k1, gamma, mu1, sigma, kappa, pi, k2, k3, k4, mu2, mu3, mu4, q2, q3, q4 = params
 
     # Parameters for single type model
-    xi = np.copy(params[0:7])
+    
+   #xi = np.copy(params[0:7])
+   
+   #Extension
+    xi = np.array([delta, k1, gamma, mu1, sigma, kappa, pi, eta, alpha, p0, a, s_bar])
 
     # Variables for 2-type estimation
     q1 = 1 - q2 - q3 - q4
@@ -278,7 +329,7 @@ if __name__ == "__main__":
         0.5,    # sigma
         24.0,   # kappa
         0.0,    # pi
-        50.0,   # k2
+        25.0,   # k2
         1.0,    # k3
         1.0,    # k4
         4.0,    # mu2
@@ -288,6 +339,15 @@ if __name__ == "__main__":
         0.0,    # q3
         0.0     # q4
     ])
+    
+    #Extension: new params
+    eta = 0.1 #Higher eta = higher penalty avoidance 
+    alpha = 0.1 #Higher alpha = lower penalty
+    p0 = 0.5 #Higher p0 = Lower value of unemployment
+    
+    #More params for non-linear penalty probability
+    a = 10.0 #Higher a = Higher steepness
+    s_bar = 0.3 #Search effort threshold
 
     T = 31
     
@@ -308,8 +368,11 @@ if __name__ == "__main__":
     # === Extract parameters ===
     delta, k1, gamma, mu1, sigma, kappa, pi, k2, k3, k4, mu2, mu3, mu4, q2, q3, q4 = params
 
-    xi = np.array([delta, k1, gamma, mu1, sigma, kappa, pi])
-
+    #xi = np.array([delta, k1, gamma, mu1, sigma, kappa, pi])
+    
+    #Extension
+    xi = np.array([delta, k1, gamma, mu1, sigma, kappa, pi, eta, alpha, p0, a, s_bar])
+    
     # --- Type 1 ---
     s1, logphi1, haz1, w1, surv1, D1, Ew1 = solveModel(xi, inst1)
 
@@ -452,7 +515,10 @@ with PdfPages(pdf_path) as pdf:
 # =========================
     for i, (k_val, mu_val) in enumerate([(k1, mu1), (k2, mu2)], start=1):
 
-        xi = np.array([delta, k_val, gamma, mu_val, sigma, kappa, pi])
+        #xi = np.array([delta, k_val, gamma, mu_val, sigma, kappa, pi])
+        
+        #Extension
+        xi = np.array([delta, k_val, gamma, mu_val, sigma, kappa, pi, eta, alpha, p0, a, s_bar])
 
         s_12, logphi_12, haz_12, w_12, *_ = solveModel(xi, inst1)
         s_18, logphi_18, haz_18, w_18, *_ = solveModel(xi, inst2)
