@@ -8,7 +8,7 @@ def mu(xi, t):
     #delta, k, gamma, mu_S, sigma, kappa, pi = xi
     
     #Extension
-    delta, k, gamma, mu_S, sigma, kappa, pi, eta, alpha, p0, a, s_bar = xi
+    delta, k, gamma, mu_S, sigma, kappa, pi, eta, alpha, = xi
     
     return mu_S + pi * np.minimum(t - kappa, np.zeros(len(t)))
 
@@ -17,7 +17,7 @@ def predictedMoments(xi, b, s, logphi):
     #delta, k, gamma, mu_S, sigma, kappa, pi = xi
     
     #Extension
-    delta, k, gamma, mu_S, sigma, kappa, pi, eta, alpha, p0, a, s_bar = xi
+    delta, k, gamma, mu_S, sigma, kappa, pi, eta, alpha, = xi
     
     lastperiod = len(b)
     muv = mu(xi, np.arange(1, lastperiod + 1))
@@ -43,7 +43,7 @@ def optimalPath(xi, b):
     #delta, k, gamma, mu_S, sigma, kappa, pi = xi
     
     #Extension
-    delta, k, gamma, mu_S, sigma, kappa, pi, eta, alpha, p0, a, s_bar = xi
+    delta, k, gamma, mu_S, sigma, kappa, pi, eta, alpha, = xi
     
     lastperiod = len(b)
     muv = mu(xi, np.arange(1, lastperiod + 1))
@@ -74,15 +74,6 @@ def optimalPath(xi, b):
         
         #Linear penalty
         penalty = eta * (np.log(b[t]) - np.log(alpha * b[t]))
-        
-        #Non-linear penalty
-        #p = 1 / (1 + np.exp(a * (s[t] - s_bar)))
-        
-        #p_prime = -a * p * (1 - p)
-        
-        #delta_u = np.log(b[t]) - np.log(alpha * b[t])  # > 0
-        
-        #penalty = -p_prime * delta_u
 
         s[t] = min(
             (1 / k * (delta / (1 - delta) * integral + penalty)) ** (1 / gamma),
@@ -90,13 +81,9 @@ def optimalPath(xi, b):
         )
         
         #Extension: new utility function
-        
-        #Linear
-        p = p0 - eta * s[t]
+    
+        p = eta * (1 - s[t])
         p = np.clip(p, 0.0, 1.0)
-     
-        #Non-linear
-        #p = 1 / (1 + np.exp(a * (s[t] - s_bar)))
      
         u_new = (1 - p) * np.log(b[t]) + p * np.log(alpha * b[t])
         
@@ -113,7 +100,7 @@ def steadyState(xi, b_S):
     #delta, k, gamma, mu_S, sigma, kappa, pi = xi
     
     #Extension
-    delta, k, gamma, mu_S, sigma, kappa, pi, eta, alpha, p0, a, s_bar = xi
+    delta, k, gamma, mu_S, sigma, kappa, pi, eta, alpha, = xi
 
     # @njit(cache=True)
     def steadyStateSystem(x):
@@ -138,14 +125,6 @@ def steadyState(xi, b_S):
         #Linear
         penalty = eta * (np.log(b_S) - np.log(alpha * b_S))
         
-        #Non-linear
-        #p = 1 / (1 + np.exp(a * (s - s_bar)))
-        #p_prime = -a * p * (1 - p)
-        
-        #delta_u = np.log(b_S) - np.log(alpha * b_S)
-        
-        #penalty = -p_prime * delta_u
-        
         f1 = s - (1 / k * (delta / (1 - delta) * integral + penalty)) ** (1 / gamma)
 
 
@@ -157,11 +136,8 @@ def steadyState(xi, b_S):
         #)
 
         #Linear
-        p = p0 - eta * s
+        p = eta * (1 - s)
         p = np.clip(p, 0.0, 1.0)
-        
-        #Non-linear
-        #p = 1 / (1 + np.exp(a * (s - s_bar)))
 
         u_new = (1 - p) * np.log(b_S) + p * np.log(alpha * b_S)
         
@@ -261,7 +237,7 @@ def solveMultiTypeModel(params, institutions):
    #xi = np.copy(params[0:7])
    
    #Extension
-    xi = np.array([delta, k1, gamma, mu1, sigma, kappa, pi, eta, alpha, p0, a, s_bar])
+    xi = np.array([delta, k1, gamma, mu1, sigma, kappa, pi, eta, alpha])
 
     # Variables for 2-type estimation
     q1 = 1 - q2 - q3 - q4
@@ -361,13 +337,8 @@ if __name__ == "__main__":
     ])
     
     #Extension: new params
-    eta = 0.1 #Higher eta = higher penalty avoidance 
+    eta = 0.51 #Higher eta = higher penalty avoidance 
     alpha = 0.5 #Higher alpha = lower penalty
-    p0 = 0.5 #Higher p0 = Lower value of unemployment
-    
-    #More params for non-linear penalty probability
-    a = 10.0 #Higher a = Higher steepness
-    s_bar = 0.3 #Search effort threshold
 
     T = 31
     
@@ -391,7 +362,7 @@ if __name__ == "__main__":
     #xi = np.array([delta, k1, gamma, mu1, sigma, kappa, pi])
     
     #Extension
-    xi = np.array([delta, k1, gamma, mu1, sigma, kappa, pi, eta, alpha, p0, a, s_bar])
+    xi = np.array([delta, k1, gamma, mu1, sigma, kappa, pi, eta, alpha])
     
     # --- Type 1 ---
     s1, logphi1, haz1, w1, surv1, D1, Ew1 = solveModel(xi, inst1)
@@ -548,7 +519,7 @@ with PdfPages(pdf_path) as pdf:
         #xi = np.array([delta, k_val, gamma, mu_val, sigma, kappa, pi])
         
         #Extension
-        xi = np.array([delta, k_val, gamma, mu_val, sigma, kappa, pi, eta, alpha, p0, a, s_bar])
+        xi = np.array([delta, k_val, gamma, mu_val, sigma, kappa, pi, eta, alpha])
 
         s_12, logphi_12, haz_12, w_12, *_ = solveModel(xi, inst1)
         s_18, logphi_18, haz_18, w_18, *_ = solveModel(xi, inst2)
@@ -615,17 +586,17 @@ with PdfPages(pdf_path) as pdf:
         
         
 #Combined plots for different alphas
-        
-# Elasticity of search effort wrt b
 
         alpha_values = [0.1, 0.5, 0.9]
         
+# Elasticity of search effort wrt b
+
         fig = plt.figure()
         
         for alpha_val in alpha_values:
             
             xi_alpha = np.array([delta, k_val, gamma, mu_val, sigma, kappa, pi,
-                                 eta, alpha_val, p0, a, s_bar])
+                                 eta, alpha_val])
             
             elasticity = computeElasticity(xi_alpha, inst1)
             
@@ -638,16 +609,13 @@ with PdfPages(pdf_path) as pdf:
         plt.title(f"Type {i}: Elasticity of Search Effort w.r.t. b")
         plt.legend()
         
-        plt.savefig(
-            os.path.join(output_dir, "fig_elasticity_multiple_alpha.png"),
-            bbox_inches="tight"
-        )
-        pdf.savefig(fig)
-        plt.close(fig)
+        filename = os.path.join(output_dir, f"fig_type{i}_elasticity_multiple_alpha.png")
+        
+        plt.savefig(filename, bbox_inches="tight")
+        pdf.savefig(fig)  
+        plt.close(fig)     
         
 # Search effort for different alphas
-
-        alpha_values = [0.1, 0.5, 0.9]
         
         fig = plt.figure()
         
@@ -655,7 +623,7 @@ with PdfPages(pdf_path) as pdf:
             
             xi_alpha = np.array([
                 delta, k_val, gamma, mu_val, sigma, kappa, pi,
-                eta, alpha_val, p0, a, s_bar
+                eta, alpha_val
             ])
             
             s_alpha, _, _, _, _, _, _ = solveModel(xi_alpha, inst1)
@@ -672,12 +640,10 @@ with PdfPages(pdf_path) as pdf:
         filename = os.path.join(output_dir, f"fig_type{i}_search_multiple_alpha.png")
         
         plt.savefig(filename, bbox_inches="tight")
-        pdf.savefig(fig)   # save THIS exact fig to PDF
-        plt.close(fig)     # close AFTER saving
+        pdf.savefig(fig)  
+        plt.close(fig)     
         
 # Hazard rate for different alphas
-
-        alpha_values = [0.1, 0.5, 0.9]
         
         fig = plt.figure()
         
@@ -685,7 +651,7 @@ with PdfPages(pdf_path) as pdf:
             
             xi_alpha = np.array([
                 delta, k_val, gamma, mu_val, sigma, kappa, pi,
-                eta, alpha_val, p0, a, s_bar
+                eta, alpha_val
             ])
             
             _, _, haz_alpha, _, _, _, _ = solveModel(xi_alpha, inst1)
@@ -698,22 +664,21 @@ with PdfPages(pdf_path) as pdf:
         plt.title(f"Type {i}: Hazard for different α")
         plt.legend()
         
-        plt.savefig(
-            os.path.join(output_dir, f"fig_type{i}_hazard_multiple_alpha.png"),
-            bbox_inches="tight"
-        )
-        pdf.savefig(fig)
-        plt.close(fig)
+        filename = os.path.join(output_dir, f"fig_type{i}_haz_multiple_alpha.png")
+        
+        plt.savefig(filename, bbox_inches="tight")
+        pdf.savefig(fig)  
+        plt.close(fig)     
         
 # Reservation wage for different alphas
-
+        
         fig = plt.figure()
         
         for alpha_val in alpha_values:
             
             xi_alpha = np.array([
                 delta, k_val, gamma, mu_val, sigma, kappa, pi,
-                eta, alpha_val, p0, a, s_bar
+                eta, alpha_val
             ])
             
             _, logphi_alpha, _, _, _, _, _ = solveModel(xi_alpha, inst1)
@@ -726,12 +691,11 @@ with PdfPages(pdf_path) as pdf:
         plt.title(f"Type {i}: Reservation Wage for different α")
         plt.legend()
         
-        plt.savefig(
-            os.path.join(output_dir, f"fig_type{i}_phi_multiple_alpha.png"),
-            bbox_inches="tight"
-        )
-        pdf.savefig(fig)
-        plt.close(fig)
+        filename = os.path.join(output_dir, f"fig_type{i}_phi_multiple_alpha.png")
+        
+        plt.savefig(filename, bbox_inches="tight")
+        pdf.savefig(fig)  
+        plt.close(fig)     
         
 # Reemployment wage for different alphas
 
@@ -741,7 +705,7 @@ with PdfPages(pdf_path) as pdf:
             
             xi_alpha = np.array([
                 delta, k_val, gamma, mu_val, sigma, kappa, pi,
-                eta, alpha_val, p0, a, s_bar
+                eta, alpha_val
             ])
             
             _, _, _, w_alpha, _, _, _ = solveModel(xi_alpha, inst1)
@@ -754,9 +718,35 @@ with PdfPages(pdf_path) as pdf:
         plt.title(f"Type {i}: Reemployment Wage for different α")
         plt.legend()
         
-        plt.savefig(
-            os.path.join(output_dir, f"fig_type{i}_wage_multiple_alpha.png"),
-            bbox_inches="tight"
-        )
-        pdf.savefig(fig)
-        plt.close(fig)
+        filename = os.path.join(output_dir, f"fig_type{i}_wage_multiple_alpha.png")
+        
+        plt.savefig(filename, bbox_inches="tight")
+        pdf.savefig(fig)  
+        plt.close(fig)     
+        
+# Survival function for different alphas
+        
+        fig = plt.figure()
+        
+        for alpha_val in alpha_values:
+            
+            xi_alpha = np.array([
+                delta, k_val, gamma, mu_val, sigma, kappa, pi,
+                eta, alpha_val
+            ])
+            
+            _, _, _, _, surv, _, _ = solveModel(xi_alpha, inst1)
+            
+            plt.plot(timevec, surv, label=f"alpha={alpha_val}")
+        
+        plt.axvline(x=12, linestyle="dashed")
+        plt.xlabel("Months")
+        plt.ylabel("Survival")
+        plt.title(f"Type {i}: Survival Function for different α")
+        plt.legend()
+        
+        filename = os.path.join(output_dir, f"fig_type{i}_surv_multiple_alpha.png")
+        
+        plt.savefig(filename, bbox_inches="tight")
+        pdf.savefig(fig)  
+        plt.close(fig)     
