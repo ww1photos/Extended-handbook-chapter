@@ -226,6 +226,26 @@ def solveModel(xi, institutions):
     # E_logw_reemp = 0
     return s, logphi, haz, logw_reemp, surv, D, E_logw_reemp
 
+#Extension: Elasticity of benefits on search effort
+
+def computeElasticity(xi, institutions, eps=1e-4):
+    
+    T, b = institutions
+
+    # Baseline
+    s_base, _, _, _, _, _, _ = solveModel(xi, institutions)
+
+    # Perturb benefits proportionally
+    b_up = b * (1 + eps)
+    institutions_up = (T, b_up)
+
+    s_up, _, _, _, _, _, _ = solveModel(xi, institutions_up)
+
+    # Elasticity
+    elasticity = (np.log(s_up + 1e-8) - np.log(s_base + 1e-8)) / np.log(1 + eps)
+
+    return elasticity
+
 def solveMultiTypeModel(params, institutions):
     """
     Solves the  model in a multi-type setup.
@@ -342,7 +362,7 @@ if __name__ == "__main__":
     
     #Extension: new params
     eta = 0.1 #Higher eta = higher penalty avoidance 
-    alpha = 0.1 #Higher alpha = lower penalty
+    alpha = 0.5 #Higher alpha = lower penalty
     p0 = 0.5 #Higher p0 = Lower value of unemployment
     
     #More params for non-linear penalty probability
@@ -389,7 +409,8 @@ if __name__ == "__main__":
     
     import matplotlib.pyplot as plt
 
-                    #PLOTS
+#Plots
+
 with PdfPages(pdf_path) as pdf:
         
 #Agg Search Effort
@@ -397,6 +418,7 @@ with PdfPages(pdf_path) as pdf:
     fig = plt.figure()
     plt.plot(timevec, s1, label="Type 1", linestyle="--")
     plt.plot(timevec, s2, label="Type 2", linestyle="-.")
+    plt.plot([], [], ' ', label=f'α = {alpha}')
     plt.axvline(x=12, color="gray", linestyle="dashed")
     plt.ylim(bottom=0, top=1.0)
     plt.xlabel("Months")
@@ -412,6 +434,7 @@ with PdfPages(pdf_path) as pdf:
     fig = plt.figure()
     plt.plot(timevec, logphi1, label="Type 1", linestyle="--")
     plt.plot(timevec, logphi2, label="Type 2", linestyle="-.")
+    plt.plot([], [], ' ', label=f'α = {alpha}')
     plt.axvline(x=12, color="gray", linestyle="dashed")
     plt.xlabel("Months")
     plt.ylabel("Log Reservation Wage")
@@ -426,6 +449,7 @@ with PdfPages(pdf_path) as pdf:
     fig = plt.figure()
     plt.plot(timevec, surv1, label="Type 1", linestyle="--")
     plt.plot(timevec, surv2, label="Type 2", linestyle="-.")
+    plt.plot([], [], ' ', label=f'α = {alpha}')
     plt.axvline(x=12, color="gray", linestyle="dashed")
     plt.xlabel("Months")
     plt.ylabel("Survival")
@@ -440,6 +464,7 @@ with PdfPages(pdf_path) as pdf:
     fig = plt.figure()
     plt.plot(timevec, weight1, label="Type 1", linestyle="--")
     plt.plot(timevec, weight2, label="Type 2", linestyle="-.")
+    plt.plot([], [], ' ', label=f'α = {alpha}')
     plt.axvline(x=12, color="gray", linestyle="dashed")
     plt.ylim(bottom=0, top=1.0)
     plt.xlabel("Months")
@@ -455,10 +480,12 @@ with PdfPages(pdf_path) as pdf:
     fig = plt.figure()
     plt.plot(timevec, haz1, label="Type 1", linestyle="--")
     plt.plot(timevec, haz2, label="Type 2", linestyle="-.")
+    plt.plot([], [], ' ', label=f'α = {alpha}')
     plt.axvline(x=12, color="gray", linestyle="dashed")
     plt.xlabel("Months")
     plt.ylabel("Hazard")
     plt.title("Exit Hazard")
+    plt.legend()
     plt.savefig(os.path.join(output_dir, "fig_type_agg_hazard.png"), bbox_inches="tight")
     pdf.savefig(fig)
     plt.close(fig)
@@ -468,6 +495,7 @@ with PdfPages(pdf_path) as pdf:
     fig = plt.figure()
     plt.plot(timevec, w1, label="Type 1", linestyle="--")
     plt.plot(timevec, w2, label="Type 2", linestyle="-.")
+    plt.plot([], [], ' ', label=f'α = {alpha}')
     plt.axvline(x=12, color="gray", linestyle="dashed")
     plt.xlabel("Months")
     plt.ylabel("Log Wage")
@@ -485,6 +513,7 @@ with PdfPages(pdf_path) as pdf:
     fig = plt.figure()
     plt.plot(timevec, haz_agg_12, label="Hazard, P=12", linestyle="--")
     plt.plot(timevec, haz_agg_18, label="Hazard, P=18", linestyle="-.")
+    plt.plot([], [], ' ', label=f'α = {alpha}')
     plt.axvline(x=12, color="gray", linestyle="dashed")
     plt.axvline(x=18, color="gray", linestyle="dashed")
     plt.xlabel("Months")
@@ -499,6 +528,7 @@ with PdfPages(pdf_path) as pdf:
     fig = plt.figure()
     plt.plot(timevec[:25], w_agg_12[:25], label="Wage, P=12", linestyle="--")
     plt.plot(timevec[:25], w_agg_18[:25], label="Wage, P=18", linestyle="-.")
+    plt.plot([], [], ' ', label=f'α = {alpha}')
     plt.axvline(x=12, color="gray", linestyle="dashed")
     plt.axvline(x=18, color="gray", linestyle="dashed")
     plt.xlabel("Months")
@@ -510,9 +540,9 @@ with PdfPages(pdf_path) as pdf:
     plt.close(fig)
 
     
-# =========================
-# 3. TYPE-SPECIFIC POLICY EFFECTS
-# =========================
+
+# Type-specific plots
+
     for i, (k_val, mu_val) in enumerate([(k1, mu1), (k2, mu2)], start=1):
 
         #xi = np.array([delta, k_val, gamma, mu_val, sigma, kappa, pi])
@@ -527,6 +557,7 @@ with PdfPages(pdf_path) as pdf:
         fig = plt.figure()
         plt.plot(timevec, s_12, label="P=12")
         plt.plot(timevec, s_18, label="P=18")
+        plt.plot([], [], ' ', label=f'α = {alpha}')
         plt.axvline(x=12, linestyle="dashed")
         plt.axvline(x=18, linestyle="dashed")
         plt.title(f"Type {i}: Search Effort")
@@ -541,6 +572,7 @@ with PdfPages(pdf_path) as pdf:
         fig = plt.figure()
         plt.plot(timevec, haz_12, label="P=12")
         plt.plot(timevec, haz_18, label="P=18")
+        plt.plot([], [], ' ', label=f'α = {alpha}')
         plt.axvline(x=12, linestyle="dashed")
         plt.axvline(x=18, linestyle="dashed")
         plt.title(f"Type {i}: Hazard")
@@ -554,6 +586,7 @@ with PdfPages(pdf_path) as pdf:
         fig = plt.figure()
         plt.plot(timevec, logphi_12, label="P=12", linestyle="--")
         plt.plot(timevec, logphi_18, label="P=18", linestyle="-.")
+        plt.plot([], [], ' ', label=f'α = {alpha}')
         plt.axvline(x=12, linestyle="dashed")
         plt.axvline(x=18, linestyle="dashed")
         plt.xlabel("Months")
@@ -569,6 +602,7 @@ with PdfPages(pdf_path) as pdf:
         fig = plt.figure()
         plt.plot(timevec, w_12, label="P=12", linestyle="--")
         plt.plot(timevec, w_18, label="P=18", linestyle="-.")
+        plt.plot([], [], ' ', label=f'α = {alpha}')
         plt.axvline(x=12, linestyle="dashed")
         plt.axvline(x=18, linestyle="dashed")
         plt.xlabel("Months")
@@ -576,5 +610,153 @@ with PdfPages(pdf_path) as pdf:
         plt.title(f"Type {i}: Log Reemployment Wage")
         plt.legend()
         plt.savefig(os.path.join(output_dir, f"fig_type{i}_w.png"), bbox_inches="tight")
+        pdf.savefig(fig)
+        plt.close(fig)
+        
+        
+#Combined plots for different alphas
+        
+# Elasticity of search effort wrt b
+
+        alpha_values = [0.1, 0.5, 0.9]
+        
+        fig = plt.figure()
+        
+        for alpha_val in alpha_values:
+            
+            xi_alpha = np.array([delta, k_val, gamma, mu_val, sigma, kappa, pi,
+                                 eta, alpha_val, p0, a, s_bar])
+            
+            elasticity = computeElasticity(xi_alpha, inst1)
+            
+            plt.plot(timevec, elasticity, label=f"α={alpha_val}")
+        
+        plt.axvline(x=12, linestyle="dashed")
+        #plt.ylim(-3, 0)
+        plt.xlabel("Months")
+        plt.ylabel("Elasticity")
+        plt.title(f"Type {i}: Elasticity of Search Effort w.r.t. b")
+        plt.legend()
+        
+        plt.savefig(
+            os.path.join(output_dir, "fig_elasticity_multiple_alpha.png"),
+            bbox_inches="tight"
+        )
+        pdf.savefig(fig)
+        plt.close(fig)
+        
+# Search effort for different alphas
+
+        alpha_values = [0.1, 0.5, 0.9]
+        
+        fig = plt.figure()
+        
+        for alpha_val in alpha_values:
+            
+            xi_alpha = np.array([
+                delta, k_val, gamma, mu_val, sigma, kappa, pi,
+                eta, alpha_val, p0, a, s_bar
+            ])
+            
+            s_alpha, _, _, _, _, _, _ = solveModel(xi_alpha, inst1)
+            
+            plt.plot(timevec, s_alpha, label=f"α={alpha_val}")
+        
+        plt.axvline(x=12, linestyle="dashed")
+        plt.ylim(bottom=0, top=1.0)
+        plt.xlabel("Months")
+        plt.ylabel("Search Effort")
+        plt.title(f"Type {i}: Search Effort for different α")
+        plt.legend()
+        
+        filename = os.path.join(output_dir, f"fig_type{i}_search_multiple_alpha.png")
+        
+        plt.savefig(filename, bbox_inches="tight")
+        pdf.savefig(fig)   # save THIS exact fig to PDF
+        plt.close(fig)     # close AFTER saving
+        
+# Hazard rate for different alphas
+
+        alpha_values = [0.1, 0.5, 0.9]
+        
+        fig = plt.figure()
+        
+        for alpha_val in alpha_values:
+            
+            xi_alpha = np.array([
+                delta, k_val, gamma, mu_val, sigma, kappa, pi,
+                eta, alpha_val, p0, a, s_bar
+            ])
+            
+            _, _, haz_alpha, _, _, _, _ = solveModel(xi_alpha, inst1)
+            
+            plt.plot(timevec, haz_alpha, label=f"α={alpha_val}")
+        
+        plt.axvline(x=12, linestyle="dashed")
+        plt.xlabel("Months")
+        plt.ylabel("Hazard")
+        plt.title(f"Type {i}: Hazard for different α")
+        plt.legend()
+        
+        plt.savefig(
+            os.path.join(output_dir, f"fig_type{i}_hazard_multiple_alpha.png"),
+            bbox_inches="tight"
+        )
+        pdf.savefig(fig)
+        plt.close(fig)
+        
+# Reservation wage for different alphas
+
+        fig = plt.figure()
+        
+        for alpha_val in alpha_values:
+            
+            xi_alpha = np.array([
+                delta, k_val, gamma, mu_val, sigma, kappa, pi,
+                eta, alpha_val, p0, a, s_bar
+            ])
+            
+            _, logphi_alpha, _, _, _, _, _ = solveModel(xi_alpha, inst1)
+            
+            plt.plot(timevec, logphi_alpha, label=f"α={alpha_val}")
+        
+        plt.axvline(x=12, linestyle="dashed")
+        plt.xlabel("Months")
+        plt.ylabel("Log Reservation Wage")
+        plt.title(f"Type {i}: Reservation Wage for different α")
+        plt.legend()
+        
+        plt.savefig(
+            os.path.join(output_dir, f"fig_type{i}_phi_multiple_alpha.png"),
+            bbox_inches="tight"
+        )
+        pdf.savefig(fig)
+        plt.close(fig)
+        
+# Reemployment wage for different alphas
+
+        fig = plt.figure()
+        
+        for alpha_val in alpha_values:
+            
+            xi_alpha = np.array([
+                delta, k_val, gamma, mu_val, sigma, kappa, pi,
+                eta, alpha_val, p0, a, s_bar
+            ])
+            
+            _, _, _, w_alpha, _, _, _ = solveModel(xi_alpha, inst1)
+            
+            plt.plot(timevec, w_alpha, label=f"α={alpha_val}")
+        
+        plt.axvline(x=12, linestyle="dashed")
+        plt.xlabel("Months")
+        plt.ylabel("Log Reemployment Wage")
+        plt.title(f"Type {i}: Reemployment Wage for different α")
+        plt.legend()
+        
+        plt.savefig(
+            os.path.join(output_dir, f"fig_type{i}_wage_multiple_alpha.png"),
+            bbox_inches="tight"
+        )
         pdf.savefig(fig)
         plt.close(fig)
