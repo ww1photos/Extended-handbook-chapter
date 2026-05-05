@@ -1,4 +1,3 @@
-import sys
 import numpy as np
 from scipy.stats import norm
 from scipy.optimize import minimize
@@ -312,8 +311,6 @@ if __name__ == "__main__":
     denom = np.maximum(q1 * surv1 + q2 * surv2, 1e-8)
     weight1 = q1 * surv1 / denom
     weight2 = q2 * surv2 / denom
-    
-    import matplotlib.pyplot as plt
 
 #Plots
 
