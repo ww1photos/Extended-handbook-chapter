@@ -263,7 +263,7 @@ if not os.path.exists(output_dir):
 
 if __name__ == "__main__":
 
-    #Calibrated parameters from Le Barbanchon et al. (2024)
+    #Calibrated parameters from Le Barbanchon et al. (2025)
     params = np.array([
         0.98,   # delta
         12.0,   # k1
