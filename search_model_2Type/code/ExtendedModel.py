@@ -4,6 +4,7 @@ from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
 "Computes hazard rate and expected reemployment wages"
+
 def predictedMoments(xi, b, s, logphi):
     
     "Extension: new parameters"
@@ -30,7 +31,8 @@ def predictedMoments(xi, b, s, logphi):
     return haz, logw_reemp
 
 
-"#Solves optimal search effort and reservation wage"
+"Solves optimal search effort and reservation wage"
+
 def optimalPath(xi, b):
     
     "Extension: new parameters"
@@ -57,22 +59,20 @@ def optimalPath(xi, b):
         )
         if np.isnan(integral) or integral < 0:
             integral = 0
-            
-            
+           
+        "Extension: new search effort FOC"   
         #s[t] = min((1 / k * delta / (1 - delta) * integral) ** (1 / gamma), 1)
         
-        "Extension: new search effort FOC"
-        
         #penalty = eta * (np.log(b[t]) - np.log(alpha * b[t]))
-        penalty = -eta*(np.log(alpha))
+        penalty = -eta * (np.log(alpha))
 
         s[t] = min((1 / k * (delta / (1 - delta) * integral + penalty)) ** (1 / gamma),1)
         
         "Extension: new utility function for reservation wage"
     
-        "Penalty propability function"
+        #Penalty propability function
         p = eta * (1 - s[t])
-        p = np.clip(p, 0.0, 1.0)
+        p = np.clip(p, 0.0, 1.0) #Sets bounds
      
         u_new = (1 - p) * np.log(b[t]) + p * np.log(alpha * b[t])
         
@@ -85,6 +85,7 @@ def optimalPath(xi, b):
     return s, logphi
 
 "Solves for steady-state values of search effort and reservation wage"
+
 def steadyState(xi, b_S):
     
     "Extension: new parameters"
@@ -109,7 +110,7 @@ def steadyState(xi, b_S):
         "Search effort FOC"
         #f1 = s - (1 / k * delta / (1 - delta) * integral) ** (1 / gamma)
         
-        penalty = eta * (np.log(b_S) - np.log(alpha * b_S))
+        penalty = -eta * (np.log(alpha))
         
         f1 = s - (1 / k * (delta / (1 - delta) * integral + penalty)) ** (1 / gamma)
         
@@ -152,6 +153,7 @@ def steadyState(xi, b_S):
     return s_S_cap, logphi_S
 
 "Solves the model for single type worker with parameters, moments and optimal behaviour"
+
 def solveModel(xi, institutions):
     T, b = institutions
 
@@ -179,6 +181,7 @@ def solveModel(xi, institutions):
     return s, logphi, haz, logw_reemp, surv, D, E_logw_reemp
 
 "Computes elasticity of search effort w.r.t. benefits"
+
 def computeElasticity(xi, institutions, eps=1e-4):
     
     T, b = institutions
@@ -198,6 +201,7 @@ def computeElasticity(xi, institutions, eps=1e-4):
     return elasticity
 
 "Solves the model for multiple type workers"
+
 def solveMultiTypeModel(params, institutions):
 
     delta, k1, gamma, mu1, sigma, k2, mu2, q2 = params
@@ -259,7 +263,7 @@ if not os.path.exists(output_dir):
 
 if __name__ == "__main__":
 
-    #Calibrated parameters
+    #Calibrated parameters from Le Barbanchon et al. (2024)
     params = np.array([
         0.98,   # delta
         12.0,   # k1
@@ -275,14 +279,18 @@ if __name__ == "__main__":
     eta = 0.51 #Higher eta = higher baseline penalty and slope of search effort
     alpha = 0.5 #Higher alpha = lower penalty
 
+    #T = 31 periods
     T = 31
     
+    #UI exhaustion at 12 or 18 months
     P1 = 12
     P2 = 18
     
+    #Benefits per period after UI exhaustion
     ben1 = np.ones(T) * 800 / 30
     ben2 = np.ones(T) * 800 / 30
     
+    #Benefits per period with UI
     ben1[:P1] = 1100 / 30
     ben2[:P2] = 1100 / 30
     
@@ -291,7 +299,6 @@ if __name__ == "__main__":
     
     timevec = np.arange(T) + 1
     
-    #Extract parameters 
     delta, k1, gamma, mu1, sigma, k2, mu2, q2 = params
 
     "Extension: new parameters"
@@ -442,9 +449,7 @@ with PdfPages(pdf_path) as pdf:
     pdf.savefig(fig)
     plt.close(fig)
 
-    
-
-# Type-specific plots
+#Type-specific plots
 
     for i, (k_val, mu_val) in enumerate([(k1, mu1), (k2, mu2)], start=1):
 
@@ -455,7 +460,7 @@ with PdfPages(pdf_path) as pdf:
         s_12, logphi_12, haz_12, w_12, *_ = solveModel(xi, inst1)
         s_18, logphi_18, haz_18, w_18, *_ = solveModel(xi, inst2)
 
-# Search effort
+#Search effort
         fig = plt.figure()
         plt.plot(timevec, s_12, label="P=12")
         plt.plot(timevec, s_18, label="P=18")
@@ -469,7 +474,7 @@ with PdfPages(pdf_path) as pdf:
         plt.close(fig)
 
 
-# Hazard
+#Hazard
 
         fig = plt.figure()
         plt.plot(timevec, haz_12, label="P=12")
@@ -483,7 +488,7 @@ with PdfPages(pdf_path) as pdf:
         pdf.savefig(fig)
         plt.close(fig)
         
-# Reservation wage
+#Reservation wage
 
         fig = plt.figure()
         plt.plot(timevec, logphi_12, label="P=12", linestyle="--")
@@ -499,7 +504,7 @@ with PdfPages(pdf_path) as pdf:
         pdf.savefig(fig)
         plt.close(fig)
         
-# Reemployment wages
+#Reemployment wages
 
         fig = plt.figure()
         plt.plot(timevec, w_12, label="P=12", linestyle="--")
@@ -516,11 +521,10 @@ with PdfPages(pdf_path) as pdf:
         plt.close(fig)
         
         
-#Combined plots for different alphas
-
+        "Extension: combined plots for different penalty regimes"
         alpha_values = [0.1, 0.5, 0.9]
         
-# Search effort for different alphas
+#Search effort for different alphas
         
         fig = plt.figure()
         
@@ -548,7 +552,7 @@ with PdfPages(pdf_path) as pdf:
         pdf.savefig(fig)  
         plt.close(fig)     
         
-# Hazard rate for different alphas
+#Hazard rate for different alphas
         
         fig = plt.figure()
         
@@ -576,7 +580,7 @@ with PdfPages(pdf_path) as pdf:
         pdf.savefig(fig)  
         plt.close(fig)     
         
-# Reservation wage for different alphas
+#Reservation wage for different alphas
         
         fig = plt.figure()
         
@@ -604,7 +608,7 @@ with PdfPages(pdf_path) as pdf:
         pdf.savefig(fig)  
         plt.close(fig)     
         
-# Reemployment wage for different alphas
+#Reemployment wage for different alphas
 
         fig = plt.figure()
         
@@ -632,7 +636,7 @@ with PdfPages(pdf_path) as pdf:
         pdf.savefig(fig)  
         plt.close(fig)     
         
-# Survival function for different alphas
+#Survival function for different alphas
         
         fig = plt.figure()
         
@@ -659,7 +663,7 @@ with PdfPages(pdf_path) as pdf:
         pdf.savefig(fig)  
         plt.close(fig)     
 
-# Elasticity of search effort wrt b
+#Elasticity of search effort wrt b
 
         fig = plt.figure()
         
@@ -685,7 +689,7 @@ with PdfPages(pdf_path) as pdf:
         pdf.savefig(fig)  
         plt.close(fig)     
 
-# Unemployment duration for different alphas 
+#Unemployment duration for different alphas 
 
         fig = plt.figure()
         
