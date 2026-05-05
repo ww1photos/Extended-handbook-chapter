@@ -4,23 +4,15 @@ from scipy.stats import norm
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
-def mu(xi, t):
-    #delta, k, gamma, mu_S, sigma, kappa, pi = xi
-    
-    #Extension
-    delta, k, gamma, mu_S, sigma, kappa, pi, eta, alpha, = xi
-    
-    return mu_S + pi * np.minimum(t - kappa, np.zeros(len(t)))
-
-
+"Computes hazard rate and expected reemployment wages"
 def predictedMoments(xi, b, s, logphi):
-    #delta, k, gamma, mu_S, sigma, kappa, pi = xi
     
-    #Extension
-    delta, k, gamma, mu_S, sigma, kappa, pi, eta, alpha, = xi
+    "Extension: new parameters"
+    #delta, k, gamma, mu_S, sigma = xi
+    delta, k, gamma, mu_S, sigma, eta, alpha, = xi
     
     lastperiod = len(b)
-    muv = mu(xi, np.arange(1, lastperiod + 1))
+    muv = np.full(lastperiod, mu_S)
     haz = np.zeros(len(b))
     logw_reemp = np.zeros(len(b))
 
@@ -39,18 +31,18 @@ def predictedMoments(xi, b, s, logphi):
     return haz, logw_reemp
 
 
+"#Solves optimal search effort and reservation wage"
 def optimalPath(xi, b):
-    #delta, k, gamma, mu_S, sigma, kappa, pi = xi
     
-    #Extension
-    delta, k, gamma, mu_S, sigma, kappa, pi, eta, alpha, = xi
+    "Extension: new parameters"
+    #delta, k, gamma, mu_S, sigma = xi
+    delta, k, gamma, mu_S, sigma, eta, alpha, = xi
     
     lastperiod = len(b)
-    muv = mu(xi, np.arange(1, lastperiod + 1))
+    muv = np.full(lastperiod, mu_S)
     s = np.zeros(lastperiod)
     logphi = np.zeros(lastperiod)
 
-    # Assuming steadyState is another function to compute steady state
     s[-1], logphi[-1] = steadyState(xi, b[-1])
 
     for t in range(lastperiod - 2, -1, -1):
@@ -70,23 +62,20 @@ def optimalPath(xi, b):
             
         #s[t] = min((1 / k * delta / (1 - delta) * integral) ** (1 / gamma), 1)
         
-        #Extension: new search effort FOC
+        "Extension: new search effort FOC"
         
-        #Linear penalty
-        penalty = eta * (np.log(b[t]) - np.log(alpha * b[t]))
+        #penalty = eta * (np.log(b[t]) - np.log(alpha * b[t]))
+        penalty = -eta*(np.log(alpha))
 
-        s[t] = min(
-            (1 / k * (delta / (1 - delta) * integral + penalty)) ** (1 / gamma),
-            1
-        )
+        s[t] = min((1 / k * (delta / (1 - delta) * integral + penalty)) ** (1 / gamma),1)
         
-        #Extension: new utility function
+        "Extension: new utility function for reservation wage"
     
+        "Penalty propability function"
         p = eta * (1 - s[t])
         p = np.clip(p, 0.0, 1.0)
      
         u_new = (1 - p) * np.log(b[t]) + p * np.log(alpha * b[t])
-        
         
         logphi[t] = (
             (1 - delta) * (u_new - k * (s[t] ** (1 + gamma)) / (1 + gamma))
@@ -96,13 +85,13 @@ def optimalPath(xi, b):
 
     return s, logphi
 
+"Solves for steady-state values of search effort and reservation wage"
 def steadyState(xi, b_S):
-    #delta, k, gamma, mu_S, sigma, kappa, pi = xi
     
-    #Extension
-    delta, k, gamma, mu_S, sigma, kappa, pi, eta, alpha, = xi
+    "Extension: new parameters"
+    #delta, k, gamma, mu_S, sigma = xi
+    delta, k, gamma, mu_S, sigma, eta, alpha, = xi
 
-    # @njit(cache=True)
     def steadyStateSystem(x):
         s, q = x
         omega = (q - mu_S) / sigma
@@ -115,27 +104,24 @@ def steadyState(xi, b_S):
         )
         if np.isnan(integral) or integral < 0:
             integral = 0
-
         
-
+        "Extension: new steady-state search effort and reservation wages"
+        
+        "Search effort FOC"
         #f1 = s - (1 / k * delta / (1 - delta) * integral) ** (1 / gamma)
         
-        #Extension: new steady state search effort and reservation wages
-        
-        #Linear
         penalty = eta * (np.log(b_S) - np.log(alpha * b_S))
         
         f1 = s - (1 / k * (delta / (1 - delta) * integral + penalty)) ** (1 / gamma)
-
-
+        
+        "Reservation wage FOC"
         #f2 = (
             #-q
             #+ np.log(b_S)
             #- k * (min(s, 1) ** (1 + gamma)) / (1 + gamma)
             #+ delta / (1 - delta) * min(s, 1) * integral
         #)
-
-        #Linear
+        
         p = eta * (1 - s)
         p = np.clip(p, 0.0, 1.0)
 
@@ -148,32 +134,25 @@ def steadyState(xi, b_S):
             + delta / (1 - delta) * min(s, 1) * integral
         )
 
-        # Return sum of squares of the deviations
+        #Return sum of squares of the deviations
         return f1**2 + f2**2
 
-    # Bounds for s and q
-    # bounds = [(0, 1), (0, None)]  # s between 0 and 1, q greater than 0
-    bounds = [(0, None), (0, None)]  # s between 0 and 1, q greater than 0
+    #Bounds for s and q
+    bounds = [(0, None), (0, None)]
 
-    # Initial guess
+    #Initial guess
     x0 = [0.05, mu_S]
 
-    # Solve the system of equations
+    #Solve the system of equations
     res = minimize(steadyStateSystem, x0, bounds=bounds, method="L-BFGS-B")
     s_S = res.x[0]
     logphi_S = res.x[1]
-
-    # print(res.x)
-    # optimized_x = gradient_descent(steadyStateSystem, x0, bounds)
-    # s_S = optimized_x[0]
-    # logphi_S = optimized_x[1]
-    # print(optimized_x)
     
     s_S_cap = min(s_S,1)
 
     return s_S_cap, logphi_S
 
-
+"Solves the model for single type worker with parameters, moments and optimal behaviour"
 def solveModel(xi, institutions):
     T, b = institutions
 
@@ -182,7 +161,6 @@ def solveModel(xi, institutions):
     surv = np.ones(len(b))
     for t in range(1, len(b)):
         surv[t] = surv[t - 1] * (1 - haz[t - 1])
-    # T=96
     
     Tminb = T - len(b)
     haz_long = np.concatenate((haz, np.ones(Tminb) * haz[-1]))
@@ -199,111 +177,77 @@ def solveModel(xi, institutions):
     else: 
         E_logw_reemp = 0
 
-    # E_logw_reemp = 0
     return s, logphi, haz, logw_reemp, surv, D, E_logw_reemp
 
-#Extension: Elasticity of benefits on search effort
-
+"Computes elasticity of search effort w.r.t. benefits"
 def computeElasticity(xi, institutions, eps=1e-4):
     
     T, b = institutions
 
-    # Baseline
+    #Baseline
     s_base, _, _, _, _, _, _ = solveModel(xi, institutions)
 
-    # Perturb benefits proportionally
+    #Perturb benefits proportionally
     b_up = b * (1 + eps)
     institutions_up = (T, b_up)
 
     s_up, _, _, _, _, _, _ = solveModel(xi, institutions_up)
 
-    # Elasticity
+    #Elasticity
     elasticity = (np.log(s_up + 1e-8) - np.log(s_base + 1e-8)) / np.log(1 + eps)
 
     return elasticity
 
+"Solves the model for multiple type workers"
 def solveMultiTypeModel(params, institutions):
-    """
-    Solves the  model in a multi-type setup.
-        Arguments:
-            params (array): Array of parameter values for all types.
-        Returns:
-    """
 
-    delta, k1, gamma, mu1, sigma, kappa, pi, k2, k3, k4, mu2, mu3, mu4, q2, q3, q4 = params
-
-    # Parameters for single type model
-    
-   #xi = np.copy(params[0:7])
+    delta, k1, gamma, mu1, sigma, k2, mu2, q2 = params
    
-   #Extension
-    xi = np.array([delta, k1, gamma, mu1, sigma, kappa, pi, eta, alpha])
+    "Extension: new parameters"
+    #xi = np.array([delta, k1, gamma, mu1, sigma])
+    xi = np.array([delta, k1, gamma, mu1, sigma, eta, alpha])
 
-    # Variables for 2-type estimation
-    q1 = 1 - q2 - q3 - q4
+    #Variables for 2-type estimation
+    q1 = 1 - q2
 
-    # Type 1
+    #Type 1
     s1, logphi1, haz1, w_reemp1, surv1, D1, E_w_reemp1 = solveModel(xi, institutions)
 
-    # Type 2
-    xi[1] = k2  # Adjust the k parameter for Type 2
+    #Type 2
+    xi[1] = k2  
     xi[3] = mu2
     s2, logphi2, haz2, w_reemp2, surv2, D2, E_w_reemp2 = solveModel(
         xi, institutions
     )
 
-    # Type 3
-    xi[1] = k3  # Adjust the k parameter for Type 2
-    xi[3] = mu3
-    s3, logphi3, haz3, w_reemp3, surv3, D3, E_w_reemp3 = solveModel(
-        xi, institutions
-    )
+    #Aggregate Survival
+    survival = q1 * surv1 + q2 * surv2
 
-    # Type 4
-    xi[1] = k4  # Adjust the k parameter for Type 2
-    xi[3] = mu4
-    s4, logphi4, haz4, w_reemp4, surv4, D4, E_w_reemp4 = solveModel(
-        xi, institutions
-    )
-
-    # Aggregate Survival
-    survival = q1 * surv1 + q2 * surv2 + q3 * surv3 + q4 * surv4
-
-    # Calculate share of each type left at beginning in unemployment
-    # weight1 = q1 * surv1 / survival
-    # weight2 = q2 * surv2 / survival
-    # weight3 = q3 * surv2 / survival
-    # Create a mask for elements in 'survival' that are not equal to 0
+    #Create a mask for elements in 'survival' that are not equal to 0
     mask = survival != 0
 
-    # Initialize 'weight1' with zeros
+    #Initialize 'weight1' with zeros
     weight1 = np.zeros_like(survival, dtype=float)
     weight2 = np.zeros_like(survival, dtype=float)
-    weight3 = np.zeros_like(survival, dtype=float)
-    weight4 = np.zeros_like(survival, dtype=float)
 
-    # Perform the division only where 'mask' is True
+    #Perform the division only where 'mask' is True
     weight1[mask] = q1 * surv1[mask] / survival[mask]
     weight2[mask] = q2 * surv2[mask] / survival[mask]
-    weight3[mask] = q3 * surv3[mask] / survival[mask]
-    weight4[mask] = q4 * surv4[mask] / survival[mask]
-    
 
-    # Calculate aggregate hazard and average reemployment wage of leavers
-    haz_agg = weight1 * haz1 + weight2 * haz2 + weight3 * haz3 + weight4 * haz4
+    #Calculate aggregate hazard and average reemployment wage of leavers
+    haz_agg = weight1 * haz1 + weight2 * haz2
     if min(haz_agg)==0:
-        w_reemp_agg = (weight1 * w_reemp1 + weight2  * w_reemp2 + weight3  * w_reemp3 + weight4  * w_reemp4) 
+        w_reemp_agg = (weight1 * w_reemp1 + weight2  * w_reemp2)
     else:
-        w_reemp_agg = (weight1 * haz1 * w_reemp1 + weight2 * haz2 * w_reemp2 + weight3 * haz3 * w_reemp3 + weight4 * haz4 * w_reemp4) / haz_agg
+        w_reemp_agg = (weight1 * haz1 * w_reemp1 + weight2 * haz2 * w_reemp2) / haz_agg
 
     # Aggregate expected duration
-    D = q1 * D1 + q2 * D2 + q3 * D3 + q4 * D4
+    D = q1 * D1 + q2 * D2
 
     # Aggregate expected wage
-    W = q1 * E_w_reemp1 + q2 * E_w_reemp2 + q3 * E_w_reemp3 + q4 * E_w_reemp4
+    W = q1 * E_w_reemp1 + q2 * E_w_reemp2
 
     return haz_agg, w_reemp_agg, survival, D, W
-
 
 import os
 from matplotlib.backends.backend_pdf import PdfPages
@@ -316,28 +260,20 @@ if not os.path.exists(output_dir):
 
 if __name__ == "__main__":
 
-    # === Estimated parameters (from estimate.py output) ===
+    #Calibrated parameters
     params = np.array([
         0.98,   # delta
         12.0,   # k1
         0.2,    # gamma
         4.0,    # mu1
         0.5,    # sigma
-        24.0,   # kappa
-        0.0,    # pi
         50.0,   # k2
-        1.0,    # k3
-        1.0,    # k4
         4.0,    # mu2
-        2.5,    # mu3
-        3.0,    # mu4
         0.5,    # q2
-        0.0,    # q3
-        0.0     # q4
     ])
     
-    #Extension: new params
-    eta = 0.51 #Higher eta = higher penalty avoidance 
+    "Extension: new parameters eta and alpha"
+    eta = 0.51 #Higher eta = higher baseline penalty and slope of search effort
     alpha = 0.5 #Higher alpha = lower penalty
 
     T = 31
@@ -356,18 +292,17 @@ if __name__ == "__main__":
     
     timevec = np.arange(T) + 1
     
-    # === Extract parameters ===
-    delta, k1, gamma, mu1, sigma, kappa, pi, k2, k3, k4, mu2, mu3, mu4, q2, q3, q4 = params
+    #Extract parameters 
+    delta, k1, gamma, mu1, sigma, k2, mu2, q2 = params
 
-    #xi = np.array([delta, k1, gamma, mu1, sigma, kappa, pi])
+    "Extension: new parameters"
+    #xi = np.array([delta, k1, gamma, mu1, sigma])
+    xi = np.array([delta, k1, gamma, mu1, sigma, eta, alpha])
     
-    #Extension
-    xi = np.array([delta, k1, gamma, mu1, sigma, kappa, pi, eta, alpha])
-    
-    # --- Type 1 ---
+    #Type 1
     s1, logphi1, haz1, w1, surv1, D1, Ew1 = solveModel(xi, inst1)
 
-    # --- Type 2 ---
+    #Type 2
     xi[1] = k2
     xi[3] = mu2
     s2, logphi2, haz2, w2, surv2, D2, Ew2 = solveModel(xi, inst1)
@@ -516,10 +451,9 @@ with PdfPages(pdf_path) as pdf:
 
     for i, (k_val, mu_val) in enumerate([(k1, mu1), (k2, mu2)], start=1):
 
-        #xi = np.array([delta, k_val, gamma, mu_val, sigma, kappa, pi])
-        
-        #Extension
-        xi = np.array([delta, k_val, gamma, mu_val, sigma, kappa, pi, eta, alpha])
+        "Extension: new parameters"
+        #xi = np.array([delta, k_val, gamma, mu_val, sigma])
+        xi = np.array([delta, k_val, gamma, mu_val, sigma, eta, alpha])
 
         s_12, logphi_12, haz_12, w_12, *_ = solveModel(xi, inst1)
         s_18, logphi_18, haz_18, w_18, *_ = solveModel(xi, inst2)
@@ -589,32 +523,6 @@ with PdfPages(pdf_path) as pdf:
 
         alpha_values = [0.1, 0.5, 0.9]
         
-# Elasticity of search effort wrt b
-
-        fig = plt.figure()
-        
-        for alpha_val in alpha_values:
-            
-            xi_alpha = np.array([delta, k_val, gamma, mu_val, sigma, kappa, pi,
-                                 eta, alpha_val])
-            
-            elasticity = computeElasticity(xi_alpha, inst1)
-            
-            plt.plot(timevec, elasticity, label=f"α={alpha_val}")
-        
-        plt.axvline(x=12, linestyle="dashed")
-        #plt.ylim(-3, 0)
-        plt.xlabel("Months")
-        plt.ylabel("Elasticity")
-        plt.title(f"Type {i}: Elasticity of Search Effort w.r.t. b")
-        plt.legend()
-        
-        filename = os.path.join(output_dir, f"fig_type{i}_elasticity_multiple_alpha.png")
-        
-        plt.savefig(filename, bbox_inches="tight")
-        pdf.savefig(fig)  
-        plt.close(fig)     
-        
 # Search effort for different alphas
         
         fig = plt.figure()
@@ -622,7 +530,7 @@ with PdfPages(pdf_path) as pdf:
         for alpha_val in alpha_values:
             
             xi_alpha = np.array([
-                delta, k_val, gamma, mu_val, sigma, kappa, pi,
+                delta, k_val, gamma, mu_val, sigma,
                 eta, alpha_val
             ])
             
@@ -630,7 +538,7 @@ with PdfPages(pdf_path) as pdf:
             
             plt.plot(timevec, s_alpha, label=f"α={alpha_val}")
         
-        plt.axvline(x=12, linestyle="dashed")
+        plt.axvline(x=12, linestyle="dashed",color="tab:grey")
         plt.ylim(bottom=0, top=1.0)
         plt.xlabel("Months")
         plt.ylabel("Search Effort")
@@ -650,7 +558,7 @@ with PdfPages(pdf_path) as pdf:
         for alpha_val in alpha_values:
             
             xi_alpha = np.array([
-                delta, k_val, gamma, mu_val, sigma, kappa, pi,
+                delta, k_val, gamma, mu_val, sigma,
                 eta, alpha_val
             ])
             
@@ -658,7 +566,8 @@ with PdfPages(pdf_path) as pdf:
             
             plt.plot(timevec, haz_alpha, label=f"α={alpha_val}")
         
-        plt.axvline(x=12, linestyle="dashed")
+        plt.axvline(x=12, linestyle="dashed",color="tab:grey")
+        plt.ylim(bottom=0, top=1.0)
         plt.xlabel("Months")
         plt.ylabel("Hazard")
         plt.title(f"Type {i}: Hazard for different α")
@@ -677,7 +586,7 @@ with PdfPages(pdf_path) as pdf:
         for alpha_val in alpha_values:
             
             xi_alpha = np.array([
-                delta, k_val, gamma, mu_val, sigma, kappa, pi,
+                delta, k_val, gamma, mu_val, sigma,
                 eta, alpha_val
             ])
             
@@ -685,7 +594,8 @@ with PdfPages(pdf_path) as pdf:
             
             plt.plot(timevec, logphi_alpha, label=f"α={alpha_val}")
         
-        plt.axvline(x=12, linestyle="dashed")
+        plt.axvline(x=12, linestyle="dashed",color="tab:grey")
+        plt.ylim(bottom=3.0, top=4.5)
         plt.xlabel("Months")
         plt.ylabel("Log Reservation Wage")
         plt.title(f"Type {i}: Reservation Wage for different α")
@@ -704,7 +614,7 @@ with PdfPages(pdf_path) as pdf:
         for alpha_val in alpha_values:
             
             xi_alpha = np.array([
-                delta, k_val, gamma, mu_val, sigma, kappa, pi,
+                delta, k_val, gamma, mu_val, sigma,
                 eta, alpha_val
             ])
             
@@ -712,7 +622,8 @@ with PdfPages(pdf_path) as pdf:
             
             plt.plot(timevec, w_alpha, label=f"α={alpha_val}")
         
-        plt.axvline(x=12, linestyle="dashed")
+        plt.axvline(x=12, linestyle="dashed",color="tab:grey")
+        plt.ylim(bottom=4.0, top=4.5)
         plt.xlabel("Months")
         plt.ylabel("Log Reemployment Wage")
         plt.title(f"Type {i}: Reemployment Wage for different α")
@@ -731,7 +642,7 @@ with PdfPages(pdf_path) as pdf:
         for alpha_val in alpha_values:
             
             xi_alpha = np.array([
-                delta, k_val, gamma, mu_val, sigma, kappa, pi,
+                delta, k_val, gamma, mu_val, sigma,
                 eta, alpha_val
             ])
             
@@ -739,7 +650,7 @@ with PdfPages(pdf_path) as pdf:
             
             plt.plot(timevec, surv, label=f"alpha={alpha_val}")
         
-        plt.axvline(x=12, linestyle="dashed")
+        plt.axvline(x=12, linestyle="dashed",color="tab:grey")
         plt.xlabel("Months")
         plt.ylabel("Survival")
         plt.title(f"Type {i}: Survival Function for different α")
@@ -750,3 +661,70 @@ with PdfPages(pdf_path) as pdf:
         plt.savefig(filename, bbox_inches="tight")
         pdf.savefig(fig)  
         plt.close(fig)     
+
+# Elasticity of search effort wrt b
+
+        fig = plt.figure()
+        
+        for alpha_val in alpha_values:
+            
+            xi_alpha = np.array([delta, k_val, gamma, mu_val, sigma,
+                                 eta, alpha_val])
+            
+            elasticity = computeElasticity(xi_alpha, inst1)
+            
+            plt.plot(timevec, elasticity, label=f"α={alpha_val}")
+        
+        plt.axvline(x=12, linestyle="dashed",color="tab:grey")
+        plt.ylim(bottom=-3.5, top=0)
+        plt.xlabel("Months")
+        plt.ylabel("Elasticity")
+        plt.title(f"Type {i}: Elasticity of Search Effort w.r.t. Benefits")
+        plt.legend()
+        
+        filename = os.path.join(output_dir, f"fig_type{i}_elasticity_multiple_alpha.png")
+        
+        plt.savefig(filename, bbox_inches="tight")
+        pdf.savefig(fig)  
+        plt.close(fig)     
+
+# Unemployment duration for different alphas 
+
+        fig = plt.figure()
+        
+        D_type1 = []
+        D_type2 = []
+        
+        for alpha_val in alpha_values:
+            
+            # --- Type 1 ---
+            xi_1 = np.array([
+                delta, k1, gamma, mu1, sigma,
+                eta, alpha_val
+            ])
+            _, _, _, _, _, D1_alpha, _ = solveModel(xi_1, inst1)
+            D_type1.append(D1_alpha)
+            
+            # --- Type 2 ---
+            xi_2 = np.array([
+                delta, k2, gamma, mu2, sigma,
+                eta, alpha_val
+            ])
+            _, _, _, _, _, D2_alpha, _ = solveModel(xi_2, inst1)
+            D_type2.append(D2_alpha)
+        
+        
+        plt.plot(alpha_values, D_type1, color="tab:blue", label="Type 1")
+        plt.plot(alpha_values, D_type2, color="tab:orange", label="Type 2")
+        plt.axhline(y=12, linestyle="dashed", color="tab:grey")
+        plt.xlabel("α")
+        plt.ylabel("Expected Duration")
+        plt.title("Unemployment Duration for different α")
+        
+        plt.legend()
+        
+        filename = os.path.join(output_dir, "fig_duration_types_vs_alpha.png")
+        
+        plt.savefig(filename, bbox_inches="tight")
+        pdf.savefig(fig)
+        plt.close(fig)
